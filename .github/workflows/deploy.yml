@@ -2,76 +2,72 @@ name: Terraform CI CD Pipeline for Deploying AWS Resources
 run-name: ${{ github.actor }} has triggered the pipeline
 
 on:
-   push:
-      branches:
-         - 'main'
+  push:
+    branches:
+      - 'main'
 
 env:
-   AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
-   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
 jobs:
-   build-infra:
-      name: terraform-ci-cd
-      runs-on: ubuntu-latest
-      steps:
-         - name: Checkout
-           uses: actions/checkout@v2 
-         - name: Set up Terraform
-           uses: hashicorp/setup-terraform@v2
-         - name: Terraform Init
-           id: init
-           run: terraform init
-           working-directory: ./terraform-workspaces
+  build-infra:
+    name: terraform-ci-cd
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2 
 
-         - name: Terraform Format
-           id: fmt
-           run: terraform fmt
-           working-directory: ./terraform-workspaces
-         
-         - name: Terraform Validate
-           id: validate
-           run: terraform validate
-           working-directory: ./terraform-workspaces
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
 
-       #  - name: Terraform Plan
-        #   id: plan
-         #  run: terraform plan
-          # working-directory: ./Terraform-VPC
+      - name: Terraform Init
+        id: init
+        run: terraform init
+        working-directory: ./terraform-workspaces
 
-         - name: Terraform workspace-dev
-           id: workspace-dev
-           run: terraform workspace new dev
-                terraform workspace select dev
-                terraform workspace show dev 
-           working-directory: ./terraform-workspaces
-
-         - name: Terraform Apply
-           id: apply-dev
-           run: terraform apply -var-file="dev.tfvars" --auto-approve
-           working-directory: ./terraform-workspaces
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt
+        working-directory: ./terraform-workspaces
       
-         - name: Terraform workspace-stage
-           id: workspace-stage
-           run: terraform workspace new stage
-                terraform workspace select stage
-                terraform workspace show stage
-           working-directory: ./terraform-workspaces
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+        working-directory: ./terraform-workspaces
 
-         - name: Terraform Apply
-           id: apply-stage
-           run: terraform apply -var-file="stage.tfvars" --auto-approve
-           working-directory: ./terraform-workspaces
+      - name: Terraform workspace-dev
+        id: workspace-dev
+        run: |
+          terraform workspace new dev || terraform workspace select dev
+          terraform workspace select dev
+        working-directory: ./terraform-workspaces
 
-         - name: Terraform workspace-prod
-           id: workspace-prod
-           run: terraform workspace new prod
-                terraform workspace select prod
-                terraform workspace show prod
-           working-directory: ./terraform-workspaces
+      - name: Terraform Apply dev
+        id: apply-dev
+        run: terraform apply -var-file="dev.tfvars" --auto-approve
+        working-directory: ./terraform-workspaces
+      
+      - name: Terraform workspace-stage
+        id: workspace-stage
+        run: |
+          terraform workspace new stage || terraform workspace select stage
+          terraform workspace select stage
+        working-directory: ./terraform-workspaces
 
-         - name: Terraform Apply
-           id: apply-prod
-           run: terraform apply -var-file="prod.tfvars" --auto-approve
-           working-directory: ./terraform-workspaces
-         
+      - name: Terraform Apply stage
+        id: apply-stage
+        run: terraform apply -var-file="stage.tfvars" --auto-approve
+        working-directory: ./terraform-workspaces
+
+      - name: Terraform workspace-prod
+        id: workspace-prod
+        run: |
+          terraform workspace new prod || terraform workspace select prod
+          terraform workspace select prod
+        working-directory: ./terraform-workspaces
+
+      - name: Terraform Apply prod
+        id: apply-prod
+        run: terraform apply -var-file="prod.tfvars" --auto-approve
+        working-directory: ./terraform-workspaces
