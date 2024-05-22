@@ -7,7 +7,7 @@ on:
       - 'main'
 
 env:
-  AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
 jobs:
@@ -21,53 +21,60 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1  # Update to your desired region
+
       - name: Terraform Init
         id: init
         run: terraform init
-        working-directory: ./terra-work
+        working-directory: ./terraform-workspaces
 
       - name: Terraform Format
         id: fmt
         run: terraform fmt
-        working-directory: ./terra-work
+        working-directory: ./terraform-workspaces
       
       - name: Terraform Validate
         id: validate
         run: terraform validate
-        working-directory: ./terra-work
+        working-directory: ./terraform-workspaces
 
       - name: Terraform workspace-dev
         id: workspace-dev
         run: |
           terraform workspace new dev || terraform workspace select dev
           terraform workspace select dev
-       # working-directory: ./terraform-workspaces
+        working-directory: ./terraform-workspaces
 
       - name: Terraform Apply dev
         id: apply-dev
         run: terraform apply -var-file="dev.tfvars" --auto-approve
-        #working-directory: ./terraform-workspaces
+        working-directory: ./terraform-workspaces
       
       - name: Terraform workspace-stage
         id: workspace-stage
         run: |
           terraform workspace new stage || terraform workspace select stage
           terraform workspace select stage
-       # working-directory: ./terraform-workspaces
+        working-directory: ./terraform-workspaces
 
       - name: Terraform Apply stage
         id: apply-stage
         run: terraform apply -var-file="stage.tfvars" --auto-approve
-       # working-directory: ./terraform-workspaces
+        working-directory: ./terraform-workspaces
 
       - name: Terraform workspace-prod
         id: workspace-prod
         run: |
           terraform workspace new prod || terraform workspace select prod
           terraform workspace select prod
-       # working-directory: ./terraform-workspaces
+        working-directory: ./terraform-workspaces
 
       - name: Terraform Apply prod
         id: apply-prod
         run: terraform apply -var-file="prod.tfvars" --auto-approve
-       # working-directory: ./terraform-workspaces
+        working-directory: ./terraform-workspaces
